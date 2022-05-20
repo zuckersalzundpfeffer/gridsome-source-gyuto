@@ -1,0 +1,19 @@
+{
+  "name": "@zuckersalzundpfeffer/gridsome-source-gyuto",
+  "version": "0.0.1",
+  "description": "gridsomeSourcePlugin for ZSP Gyuto",
+  "main": "index.js",
+  "keywords": [
+    "gridsome",
+    "gridsome-plugin",
+    "gridsome-source"
+  ],
+  "dependencies": {
+    "camelcase": "^6.3.0"
+  },
+  "peerDependencies": {
+    "gridsome": ">= 0.7.0"
+  },
+  "author": "borisbrue",
+  "license": "ISC"
+}
