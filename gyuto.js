@@ -73,6 +73,6 @@ class GyutoSite {
   }
 }
 
-module.exports = function ({ site, accessToken, host, version, revision, endpoints }) {
-  return new GyutoSite(site, accessToken, host, version, revision, endpoints);
+module.exports = function ({ site, accessToken, host, version, revision, ressources }) {
+  return new GyutoSite(site, accessToken, host, version, revision, ressources);
 };

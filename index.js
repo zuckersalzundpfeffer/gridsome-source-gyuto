@@ -4,7 +4,7 @@
 
 const gyuto = require("./gyuto");
 const camelCase = require("camelcase");
-const deepMerge = require("./helpers/deepMerge")
+const {deepMerge} = require("./helpers/deepMerge")
 
 const flatMenuType = require("./types/flatMenuType");
 
@@ -27,7 +27,7 @@ class GyutoSource {
       host: options.host,
       version: options.apiVersion,
       revision: options.apiRevision,
-      endpoints: options.endpoints,
+      ressources: options.ressources,
     });
 
     this.api = api;
@@ -38,30 +38,40 @@ class GyutoSource {
 
     api.loadSource(async (store) => {
       const { config, menus, site } = await this.client.$get("config/");
-      await this.createCollection(store, menus, "menus");
-      await this.createCollection(store, "pages");
+      await this.createCollection({store, context:menus, collectionName:"menus"});
+      const hasCustomPageType = this.options.ressources.find(res => res.endpoint && res.endpoint === "pages")
+      console.log(hasCustomPageType)
+      if(!hasCustomPageType){
+        await this.createCollection({store, context:"pages"});
+      }
       // Create other usefull Collections
-      for (const endpoint of this.options.endpoints) {
-        await this.createCollection(store, endpoint);
+      for (const ressource of this.options.ressources) {
+        if(ressource.schema){
+          await this.createCollection({store, context:ressource.endpoint, schema:ressource.schema});
+        } else {
+          await this.createCollection({store, context:ressource});
+        }
+        // 
       }
     });
   }
 
-  async createCollection(store, context, collectionName = null, schema = null) {
-    const typeName = collectionName ? this._createTypeNameFor(collectionName) : this._createTypeNameFor(context);
+  async createCollection({store, context, collectionName = null, schema = null}) {
+    const name = context.endpoint ? context.endpoint : context 
+    const typeName = collectionName ? this._createTypeNameFor(collectionName) : this._createTypeNameFor(name);
     const collection = store.addCollection({ typeName });
-
     if (!Array.isArray(context)) {
       const route = `${context}/`;
       const { meta, items } = await this.client.$get(route);
       for (const item of items) {
         const node = await this.createCollectionNode(item);
-
-        collection.addNode(schema ? this._mergeBySchema(node, schema) : node);
+        const edge = schema ? this._mergeBySchema(node, schema) : node
+        collection.addNode(edge);
       }
     } else {
       for (const node of context) {
-        collection.addNode(schema ? this._mergeBySchema(node, schema) : node);
+        const edge = schema ? this._mergeBySchema(node, schema) : node
+        collection.addNode(edge);
       }
     }
   }
