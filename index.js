@@ -4,6 +4,8 @@
 
 const gyuto = require("./gyuto");
 const camelCase = require("camelcase");
+const deepMerge = require("./helpers/deepMerge")
+
 const flatMenuType = require("./types/flatMenuType");
 
 class GyutoSource {
@@ -45,7 +47,7 @@ class GyutoSource {
     });
   }
 
-  async createCollection(store, context, collectionName = null) {
+  async createCollection(store, context, collectionName = null, schema = null) {
     const typeName = collectionName ? this._createTypeNameFor(collectionName) : this._createTypeNameFor(context);
     const collection = store.addCollection({ typeName });
 
@@ -54,11 +56,12 @@ class GyutoSource {
       const { meta, items } = await this.client.$get(route);
       for (const item of items) {
         const node = await this.createCollectionNode(item);
-        collection.addNode(node);
+
+        collection.addNode(schema ? this._mergeBySchema(node, schema) : node);
       }
     } else {
       for (const node of context) {
-        collection.addNode(node);
+        collection.addNode(schema ? this._mergeBySchema(node, schema) : node);
       }
     }
   }
@@ -70,7 +73,9 @@ class GyutoSource {
   _createTypeNameFor(route = "") {
     return camelCase(`${this.options.typeName} ${route}`, { pascalCase: true });
   }
-
+  _mergeBySchema(node, schema) {
+    return deepMerge(node, schema);
+  }
   _cleanUrl(detailUrl) {
     return detailUrl.replace(`${this.host}/${this.apiVersion}/${this.apiVersion}`);
   }
