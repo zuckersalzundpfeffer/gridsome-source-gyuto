@@ -1,9 +1,12 @@
+/**
+ * Gyuto API Client
+ */
+
 class RestClient {
   constructor(axios) {
     this.axios = axios;
   }
   async $get(url, params = {}) {
-    
     const { data } = await this.axios.get(url, params);
     return data;
   }
@@ -16,7 +19,7 @@ class RestClient {
     return data;
   }
   async $patch(url, params = {}) {
-    const { data } = await this.axios.patch(url,params);
+    const { data } = await this.axios.patch(url, params);
     return data;
   }
   async $delete(url, params = {}) {
@@ -68,7 +71,6 @@ class GyutoSite {
   get client() {
     return this.apiClient;
   }
-  
 }
 
 module.exports = function ({ site, accessToken, host, version, revision, endpoints }) {
