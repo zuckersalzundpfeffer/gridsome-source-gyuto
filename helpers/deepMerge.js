@@ -27,5 +27,6 @@ const isObject = function (item) {
   
   module.exports = {
     deepMerge,
+    isObject
   };
   

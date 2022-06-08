@@ -9,7 +9,8 @@
     "gridsome-source"
   ],
   "dependencies": {
-    "camelcase": "^6.3.0"
+    "camelcase": "^6.3.0",
+    "json-to-graphql-query": "^2.2.4"
   },
   "peerDependencies": {
     "gridsome": ">= 0.7.0"
