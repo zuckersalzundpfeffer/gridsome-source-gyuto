@@ -42,7 +42,7 @@ class GyutoSource {
       // Create Menus
       await this.createCollection({ store, context: menus, collectionName: "menus", type: flatMenuType });
       // Create MetaData from Gyuto
-      store.addMetadata("siteName", site.site_name);
+      // store.addMetadata("siteName", site.site_name);
       store.addMetadata("rootPageId", site.root_page);
       for (const tag in config.custom_meta_tags) {
         store.addMetadata(tag, config.custom_meta_tags[tag]);
@@ -171,8 +171,23 @@ class GyutoSource {
 
     return mergedNode;
   }
+  _getApiVersion(version) {
+    const versions = {
+      REST: "api",
+      rest: "api",
+      graphql: "graphql",
+    };
+    return versions[version] ? versions[version] : "api";
+  }
+  _getApiRevision(revision) {
+    const revisions = {
+      v02: "v2",
+    };
+    return revisions[revision] ? revisions[revision] : "v2";
+  }
   _cleanUrl(detailUrl) {
-    return detailUrl.replace(`${this.host}/${this.apiVersion}/${this.apiVersion}`);
+    const version = this._getApiVersion(this.options.version);
+    return `${this.options.host}/${detailUrl.substr(detailUrl.search(version), detailUrl.length)}`;
   }
 }
 
