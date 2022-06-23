@@ -1,3 +1,12 @@
+const imageBlockComponent = `
+fragment imageBlockComponent on gyutoTypes_ImageChooserBlock {
+  image{
+    id
+    file
+  }
+}
+`;
+
 const richTextComponent = `
 fragment richTextComponent on gyutoTypes_RichTextBlock {
   value
@@ -19,10 +28,12 @@ fragment components on gyutoTypes_ComponentPage {
     blockType
     ...richTextComponent
     ...codeBlockComponent
+    ...imageBlockComponent
   }
 }
 ${richTextComponent}
-${codeBlockComponent}        
+${codeBlockComponent}
+${imageBlockComponent}        
 `;
 
 module.exports = componentsFragment;
