@@ -1,6 +1,6 @@
 {
   "name": "@zuckersalzundpfeffer/gridsome-source-gyuto",
-  "version": "0.0.4",
+  "version": "0.0.4-b",
   "description": "gridsomeSourcePlugin for ZSP Gyuto Backend",
   "main": "index.js",
   "keywords": [
@@ -9,6 +9,7 @@
     "gridsome-source"
   ],
   "dependencies": {
+    "@gridsome/source-graphql": "^0.1.0",
     "camelcase": "^6.3.0",
     "json-to-graphql-query": "^2.2.4"
   },

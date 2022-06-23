@@ -1,6 +1,7 @@
 /**
  * Gyuto API Client
  */
+const GraphQLSource = require("@gridsome/source-graphql");
 
 class RestClient {
   constructor(axios) {
@@ -34,15 +35,19 @@ class GyutoSite {
     gyutoApiBase = "",
     gyutoApiType = "rest",
     gyutoApiVersion = "v2",
-    gyutoApiEndpoints = []
+    gyutoApiEndpoints = [],
+    api,
+    options
   ) {
     this.gyutoSite = gyutoSite;
     this.gyutoSiteKey = gyutoSiteKey;
     this.gyutoApiBase = gyutoApiBase;
     this.gyutoApiVersion = gyutoApiVersion;
     this.gyutoApiType = gyutoApiType;
-    this.apiClient = this._createClient();
     this.gyutoApiEndpoints = gyutoApiEndpoints;
+    this.api = api;
+    this.options = options;
+    this.apiClient = this._createClient();
   }
   getApiType(type) {
     const types = {
@@ -67,12 +72,24 @@ class GyutoSite {
       axios.defaults.headers.common["gyuto-site"] = this.gyutoSite;
       return new RestClient(axios);
     }
+    if (this.gyutoApiType === "graphql") {
+      const graphQlOptions = this.options;
+
+      graphQlOptions.url = `${this.gyutoApiBase}/api/graphql/`;
+      graphQlOptions.fieldName = "gyuto";
+      graphQlOptions.typeName = "gyutoTypes";
+      graphQlOptions.headers = {
+        "gyuto-key": this.gyutoSiteKey,
+        "gyuto-site": this.gyutoSite,
+      };
+      return new GraphQLSource(this.api, graphQlOptions);
+    }
   }
   get client() {
     return this.apiClient;
   }
 }
 
-module.exports = function ({ site, accessToken, host, version, revision, ressources }) {
-  return new GyutoSite(site, accessToken, host, version, revision, ressources);
+module.exports = function ({ site, accessToken, host, version, revision, ressources, api, options }) {
+  return new GyutoSite(site, accessToken, host, version, revision, ressources, api, options);
 };

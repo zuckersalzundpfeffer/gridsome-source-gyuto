@@ -17,7 +17,8 @@ class GyutoSource {
       environment: "main",
       host: undefined,
       mediaHost: undefined,
-      typeName: "Gyuto",
+      typeName: "GyutoType",
+      fieldName: "gyuto",
     };
   }
 
@@ -26,9 +27,11 @@ class GyutoSource {
       site: options.site,
       accessToken: options.accessToken,
       host: options.host,
-      version: options.apiVersion,
-      revision: options.apiRevision,
+      version: options.version,
+      revision: options.revision,
       ressources: options.ressources,
+      api,
+      options,
     });
 
     this.api = api;
@@ -36,45 +39,93 @@ class GyutoSource {
     this.typesIndex = {};
     this.client = client;
     this.config = {};
+    console.log("version", this.options.version);
+    if (this._getApiVersion(this.options.version) === "api") {
+      console.log("Its a rest");
+      api.loadSource(async (store) => {
+        const { config, menus, site } = await this.client.$get("config/");
+        // Create Menus
+        await this.createCollection({ store, context: menus, collectionName: "menus", type: flatMenuType });
+        // Create MetaData from Gyuto
+        // store.addMetadata("siteName", site.site_name);
+        store.addMetadata("rootPageId", site.root_page);
+        for (const tag in config.custom_meta_tags) {
+          store.addMetadata(tag, config.custom_meta_tags[tag]);
+        }
+        // create Pages
+        const hasCustomPageType = this.options.ressources.find((res) => res.endpoint && res.endpoint === "pages");
+        if (!hasCustomPageType) {
+          await this.createCollection({ store, context: "pages", rootPageId: site.root_page });
+        }
 
-    api.loadSource(async (store) => {
-      const { config, menus, site } = await this.client.$get("config/");
-      // Create Menus
-      await this.createCollection({ store, context: menus, collectionName: "menus", type: flatMenuType });
-      // Create MetaData from Gyuto
-      // store.addMetadata("siteName", site.site_name);
-      store.addMetadata("rootPageId", site.root_page);
-      for (const tag in config.custom_meta_tags) {
-        store.addMetadata(tag, config.custom_meta_tags[tag]);
-      }
-      // create Pages
-      const hasCustomPageType = this.options.ressources.find((res) => res.endpoint && res.endpoint === "pages");
-      if (!hasCustomPageType) {
-        await this.createCollection({ store, context: "pages", rootPageId: site.root_page });
-      }
+        api.createPages(async ({ graphql, createPage }) => {
+          const pageRessources = this.options.ressources.filter((res) => res.pageTemplate);
+          for (const pageRessource of pageRessources) {
+            this.createPagesFrom(pageRessource, createPage, graphql);
+          }
+        });
 
-      api.createPages(async ({ graphql, createPage }) => {
-        const pageRessources = this.options.ressources.filter((res) => res.pageTemplate);
-        for (const pageRessource of pageRessources) {
-          this.createPagesFrom(pageRessource, createPage, graphql);
+        // Create other usefull Collections
+        for (const ressource of this.options.ressources) {
+          if (ressource.endpoint) {
+            await this.createCollection({
+              store,
+              context: ressource.endpoint,
+              type: ressource.type ? ressource.type : null,
+              rootPageId: site.root_page,
+            });
+          } else {
+            await this.createCollection({ store, context: ressource, rootPageId: site.root_page });
+          }
+          //
         }
       });
+    }
+    if (this._getApiVersion(this.options.version) === "graphql") {
+      const pageFragment = require("./graphql/fragments/PageFragment.js");
+      api.createManagedPages(async ({ graphql, createPage }) => {
+        console.log(this.options.fieldName, this.options.site);
+        // Query our local GraphQL schema to get all sections
 
-      // Create other usefull Collections
-      for (const ressource of this.options.ressources) {
-        if (ressource.endpoint) {
-          await this.createCollection({
-            store,
-            context: ressource.endpoint,
-            type: ressource.type ? ressource.type : null,
-            rootPageId: site.root_page,
+        const {
+          data: {
+            gyuto: { site },
+          },
+        } = await graphql(`
+           query {
+             ${this.options.fieldName} {
+               site(hostname:"${this.options.site}"){
+                 rootPage{
+                   ...pageFragment
+                 }
+                 pages{
+                   ...pageFragment
+                 }
+               }
+             }         
+           }
+           ${pageFragment}
+           
+               
+         `);
+
+        const ressources = this.options.ressources;
+        site.pages.forEach((page) => {
+          console.log(page.pageType);
+          const { pageTemplate } = ressources.find((res) => res.pageTemplate.pageType === page.pageType);
+          const pathArray = pageTemplate.path.split(":");
+          const pageId = pageTemplate.indexProp ? page[pageTemplate.indexProp] : page.id;
+          console.log(pageTemplate, pageId);
+          createPage({
+            path: `${pathArray[0]}${pageId}`,
+            component: pageTemplate.component,
+            context: {
+              ...page,
+            },
           });
-        } else {
-          await this.createCollection({ store, context: ressource, rootPageId: site.root_page });
-        }
-        //
-      }
-    });
+        });
+      });
+    }
   }
 
   async createPagesFrom(ressource, createPage, graphql, rootPageId) {
