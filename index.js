@@ -82,9 +82,16 @@ class GyutoSource {
       });
     }
     if (this._getApiVersion(this.options.version) === "graphql") {
+      function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+      }
+
+      function replaceAll(str, find, replace) {
+        return str.replace(new RegExp(escapeRegExp(find), "g"), replace);
+      }
+
       const pageFragment = require("./graphql/fragments/PageFragment.js");
-      api.createManagedPages(async ({ graphql, createPage }) => {
-        console.log(this.options.fieldName, this.options.site);
+      api.createPages(async ({ graphql, createPage }) => {
         // Query our local GraphQL schema to get all sections
 
         const {
@@ -92,35 +99,38 @@ class GyutoSource {
             gyuto: { site },
           },
         } = await graphql(`
-           query {
-             ${this.options.fieldName} {
-               site(hostname:"${this.options.site}"){
-                 rootPage{
-                   ...pageFragment
-                 }
-                 pages{
-                   ...pageFragment
-                 }
-               }
-             }         
-           }
-           ${pageFragment}
-           
-               
-         `);
-
+            query {
+              ${this.options.fieldName} {
+                site(hostname:"${this.options.site}"){
+                  rootPage{
+                    ...pageFragment
+                  }
+                  pages{
+                    ...pageFragment
+                  }
+                }
+              }         
+            }
+            ${pageFragment}
+            
+                
+          `);
         const ressources = this.options.ressources;
         site.pages.forEach((page) => {
           console.log(page.pageType);
           const { pageTemplate } = ressources.find((res) => res.pageTemplate.pageType === page.pageType);
           const pathArray = pageTemplate.path.split(":");
           const pageId = pageTemplate.indexProp ? page[pageTemplate.indexProp] : page.id;
-          console.log(pageTemplate, pageId);
+          console.log(pageTemplate, pageId, page.id);
+
           createPage({
             path: `${pathArray[0]}${pageId}`,
             component: pageTemplate.component,
             context: {
-              ...page,
+              id: parseInt(page.id),
+              slug: page.slug,
+              title: page.title,
+              pageType: page.pageType,
             },
           });
         });
@@ -201,7 +211,6 @@ class GyutoSource {
     const node = await this.client.$get(this._cleanUrl(detail_url));
     return node;
   }
-
   _createTypeNameFor(route = "") {
     return camelCase(`${this.options.typeName} ${route}`, { pascalCase: true });
   }
