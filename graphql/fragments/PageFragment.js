@@ -1,12 +1,5 @@
 const components = require("./Components.js");
 
-const componentPage = `
-        fragment componentPage on gyutoTypes_ComponentPage {
-          ...components
-        }
-        ${components}      
-        `;
-
 const pageFragment = `
         fragment pageFragment on gyutoTypes_PageInterface {
           id
@@ -14,9 +7,13 @@ const pageFragment = `
           slug
           contentType
           pageType
-          ...componentPage
+          ...componentsPage
+          ...zspComponentsPage
+          ...zspReferencePage
+          ...zspStaticPage
+          ...zspBasePage
         }
-        ${componentPage}
+        ${components}
         `;
 
 module.exports = pageFragment;

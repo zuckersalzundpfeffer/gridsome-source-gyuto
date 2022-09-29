@@ -82,6 +82,7 @@ class GyutoSite {
         "gyuto-key": this.gyutoSiteKey,
         "gyuto-site": this.gyutoSite,
       };
+
       return new GraphQLSource(this.api, graphQlOptions);
     }
   }

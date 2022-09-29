@@ -19,21 +19,46 @@ fragment codeBlockComponent on gyutoTypes_CodeBlock {
   body
 }
 `;
-const componentsFragment = `
-fragment components on gyutoTypes_ComponentPage {
-  id
-  components {
-    id
-    field
-    blockType
-    ...richTextComponent
-    ...codeBlockComponent
-    ...imageBlockComponent
-  }
-}
+const componentsRegistry = `
 ${richTextComponent}
 ${codeBlockComponent}
-${imageBlockComponent}        
+${imageBlockComponent} 
+`;
+const componentsList = `
+...richTextComponent
+...codeBlockComponent
+...imageBlockComponent
+`;
+const combinedComponents = `
+components {
+  id
+  field
+  blockType
+  ${componentsList}
+}
+`;
+const pageComponentsFragment = `
+fragment componentsPage on gyutoTypes_ComponentPage {
+  id
+  ${combinedComponents}
+}
+fragment zspBasePage on gyutoTypes_ZspBasePage {
+  id
+  ${combinedComponents}
+}
+fragment zspStaticPage on gyutoTypes_ZspStaticPage {
+  id
+  ${combinedComponents}
+}
+fragment zspComponentsPage on gyutoTypes_ZspComponentsPage {
+  id
+  ${combinedComponents}
+}
+fragment zspReferencePage on gyutoTypes_ZspReferencePage {
+  id
+  ${combinedComponents}
+}
+${componentsRegistry}       
 `;
 
-module.exports = componentsFragment;
+module.exports = pageComponentsFragment;
