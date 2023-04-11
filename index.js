@@ -66,10 +66,15 @@ class GyutoSource {
            `);
 
         const ressources = this.options.ressources;
+        const pageRessource = ressources.find((res) => res.endpoint === "pages");
         site.pages.forEach((page) => {
-          const pageRessource = ressources.find((res) => res.endpoint === "pages");
-          const pageTemplate = pageRessource.pageTemplates.find((template) => template.pageType === page.pageType);
-          console.log(pageTemplate);
+          let pageTemplate = null;
+          if (Array.isArray(pageRessource)) {
+            pageTemplate = pageRessource.pageTemplates.find((template) => template.pageType === page.pageType);
+          } else {
+            pageTemplate = ressources.find((res) => res.pageTemplate.pageType === page.pageType).pageTemplate;
+          }
+
           if (pageTemplate) {
             // Only create pages if we have a dedicated pageTemplate and Path
             const pathArray = pageTemplate.path.split(":");
