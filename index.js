@@ -67,9 +67,10 @@ class GyutoSource {
 
         const ressources = this.options.ressources;
         const pageRessource = ressources.find((res) => res.endpoint === "pages");
+
         site.pages.forEach((page) => {
           let pageTemplate = null;
-          if (Array.isArray(pageRessource)) {
+          if (Array.isArray(pageRessource.pageTemplates)) {
             pageTemplate = pageRessource.pageTemplates.find((template) => template.pageType === page.pageType);
           } else {
             pageTemplate = ressources.find((res) => res.pageTemplate.pageType === page.pageType).pageTemplate;
