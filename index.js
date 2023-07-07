@@ -3,6 +3,8 @@
  */
 
 const gyuto = require("./gyuto");
+// const baseFragments = require("./graphql/fragments/PageFragment");
+
 class GyutoSource {
   static defaultOptions() {
     return {
@@ -13,6 +15,7 @@ class GyutoSource {
       mediaHost: undefined,
       typeName: "GyutoType",
       fieldName: "gyuto",
+      queryFragments: "",
     };
   }
 
@@ -24,6 +27,7 @@ class GyutoSource {
       version: options.version,
       revision: options.revision,
       ressources: options.ressources,
+      queryFragments: options.queryFragments,
       api,
       options,
     });
@@ -33,39 +37,56 @@ class GyutoSource {
     this.typesIndex = {};
     this.client = client;
     this.config = {};
-    console.log("version", this.options.version);
 
-    if (this._getApiVersion(this.options.version) === "graphql") {
-      api.createPages(async ({ graphql, createPage }) => {
-        const pageFragment = require("./graphql/fragments/PageFragment.js");
+    if (this.getApiVersion() === "graphql") {
+      api.loadSource(async (store) => {
+        store.addMetadata("message", "This is a global text");
+      });
+      api.createManagedPages(async ({ graphql, createPage }) => {
         // Query our local GraphQL schema to get all sections
-        console.log(graphql);
-        const {
-          data: {
-            gyuto: {
-              config: { site },
-            },
-          },
-        } = await graphql(`
-             query {
-               ${this.options.fieldName} {
-                 config {
-                   site {
-                     rootPage{
-                       id
-                     }
-                     pages{
-                       id
-                       ...pageFragment
-                     }
-                   }
-                 }
-               }         
-             }
-             ${pageFragment}
-           `);
+        // const createFragments = (fragments) => {
+        //   let fragmentString = "";
+        //   const namespacedFragment = fragments.replaceAll(" on ", " on gyutoTypes_");
+        //   fragmentString += namespacedFragment;
 
-        const ressources = this.options.ressources;
+        //   return fragmentString;
+        // };
+        const queryFragments = this.options.queryFragments.replaceAll(" on ", " on gyutoTypes_");
+        // const pageFragment = baseFragments;
+        // console.log(queryFragments);
+        //   const defaultQuery = `
+        //   query {
+        //     ${this.options.fieldName} {
+        //       config {
+        //         site {
+        //           rootPage{
+        //             id
+        //           }
+        //           pages{
+        //             id
+        //             ...pageFragment
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        //   ${pageFragment}
+        // `;
+
+        let site = null;
+
+        try {
+          const { data } = await graphql(queryFragments);
+          if (data.errors) {
+            console.error(data.errors);
+          } else {
+            site = data[this.options.fieldName].config.site;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+
+        const { ressources } = this.options;
         const pageRessource = ressources.find((res) => res.endpoint === "pages");
 
         site.pages.forEach((page) => {
@@ -86,10 +107,12 @@ class GyutoSource {
               path: `${pathArray[0]}${pageId}`,
               component: pageTemplate.component,
               context: {
-                id: parseInt(page.id),
+                ...page,
+                id: parseInt(page.id, 10),
                 slug: page.slug,
                 title: page.title,
                 pageType: page.pageType,
+                rootPageId: parseInt(site.rootPage.id, 10),
               },
             });
           }
@@ -98,20 +121,22 @@ class GyutoSource {
     }
   }
 
-  _getApiVersion(version) {
+  getApiVersion() {
     const versions = {
       REST: "api",
       rest: "api",
       graphql: "graphql",
     };
-    return versions[version] ? versions[version] : "api";
+    const version = this.options.version ? this.options.version : "api";
+    return versions[version];
   }
-  _getApiRevision(revision) {
-    const revisions = {
-      v02: "v2",
-    };
-    return revisions[revision] ? revisions[revision] : "v2";
-  }
+
+  // getApiRevision(revision) {
+  //   const revisions = {
+  //     v02: "v2",
+  //   };
+  //   return revisions[revision] ? revisions[revision] : "v2";
+  // }
 }
 
 module.exports = GyutoSource;

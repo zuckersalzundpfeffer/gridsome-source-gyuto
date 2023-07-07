@@ -1,6 +1,6 @@
 {
   "name": "@zuckersalzundpfeffer/gridsome-source-gyuto",
-  "version": "0.2.0",
+  "version": "1.2.0",
   "description": "gridsomeSourcePlugin for ZSP Gyuto Backend",
   "main": "index.js",
   "keywords": [
